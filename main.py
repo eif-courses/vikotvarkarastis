@@ -1,7 +1,34 @@
 import requests
 import json
 
+
+def get_teachers():
+    url2 = "https://vikoeif.edupage.org/timetable/server/currenttt.js?__func=curentttGetData"
+
+    payload2 = json.dumps({
+        "__args": [
+            None,
+            {
+                "year": 2022,
+                "datefrom": "2023-03-06",
+                "dateto": "2023-03-12",
+                "table": "teachers",
+                "id": "-1007",
+                "showColors": True,
+                "showIgroupsInClasses": False,
+                "showOrig": True,
+                "log_module": "CurrentTTView"
+            }
+        ],
+        "__gsh": "00000000"
+    })
+    return requests.request("POST", url2, data=payload2).json()
+
+
 if __name__ == '__main__':
+
+    get_teachers()
+
     url = "https://vikoeif.edupage.org/timetable/server/regulartt.js?__func=regularttGetData"
 
     payload = json.dumps({
@@ -32,4 +59,29 @@ if __name__ == '__main__':
     cards = result['r']['dbiAccessorRes']['tables'][20]['data_rows']
     ttreports = result['r']['dbiAccessorRes']['tables'][21]['data_rows']
 
-    print(ttreports)
+    print(teachers)
+
+    # cards
+    # 'id': '*36',
+    # 'subjectid': '-2488'     => Informacinių sistemų auditas,
+    # 'teacherids': ['-1083'],   => Lekt. V. Valukonis
+    # 'groupids': ['*24'], 'classids': ['-732']    => IS20A,
+    # 'count': 1, 'durationperiods': 1, 'classroomidss': [['-430']] => 414,
+    # 'termsdefid': '*3', 'weeksdefid': '*4', 'daysdefid': '*7', 'terms': '1',
+    # 'seminargroup': None, 'bell': '', 'studentids': [], 'groupnames': ['']
+
+    # -430 = 414
+
+    # print(lessons)
+    print(groups[46]['id'])
+    print(groups[46]['classid'])
+
+    for group in groups:
+        for cl in classes:
+            if cl['id'] == group['classid']:
+                print(cl['name'], cl['id'])
+
+# a = groups[46]['classid'] in classes[0]['id']
+# print(a)
+# print(classes[0]['id'])
+# 'classid': '-728'

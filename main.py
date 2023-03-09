@@ -27,7 +27,7 @@ def get_teachers():
 
 if __name__ == '__main__':
 
-    get_teachers()
+    print(get_teachers()['r']['ttitems'])
 
     url = "https://vikoeif.edupage.org/timetable/server/regulartt.js?__func=regularttGetData"
 

@@ -1,10 +1,18 @@
 import requests
 import json
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-
+origins = ['*']
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 def get_teachers(id, datefrom='2023-03-13', dateto='2023-03-17'):
     url2 = "https://vikoeif.edupage.org/timetable/server/currenttt.js?__func=curentttGetData"
 

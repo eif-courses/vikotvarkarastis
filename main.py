@@ -64,6 +64,10 @@ def get_teachers():
     return json.dumps(teachers)
 
 
+@app.get("/")
+def start():
+    return {'hello world'}
+
 @app.get("/teacher/{idd}/{datefrom}/{dateto}")
 def hello(idd, datefrom, dateto):
     current_teacher = get_teachers(idd, datefrom, dateto)['r']['ttitems']

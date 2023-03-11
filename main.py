@@ -1,8 +1,11 @@
 import requests
 import json
+from fastapi import FastAPI
+
+app = FastAPI()
 
 
-def get_teachers():
+def get_teachers(id, datefrom='2023-03-13', dateto='2023-03-17'):
     url2 = "https://vikoeif.edupage.org/timetable/server/currenttt.js?__func=curentttGetData"
 
     payload2 = json.dumps({
@@ -10,10 +13,10 @@ def get_teachers():
             None,
             {
                 "year": 2022,
-                "datefrom": "2023-03-06",
-                "dateto": "2023-03-12",
+                "datefrom": str(datefrom),
+                "dateto": str(dateto),
                 "table": "teachers",
-                "id": "-1007",
+                "id": str(id),
                 "showColors": True,
                 "showIgroupsInClasses": False,
                 "showOrig": True,
@@ -25,63 +28,65 @@ def get_teachers():
     return requests.request("POST", url2, data=payload2).json()
 
 
-if __name__ == '__main__':
+url = "https://vikoeif.edupage.org/timetable/server/regulartt.js?__func=regularttGetData"
 
-    print(get_teachers()['r']['ttitems'])
+payload = json.dumps({
+    "__args": [
+        None,
+        "310"
+    ],
+    "__gsh": "00000000"
+})
+response = requests.request("POST", url, data=payload)
 
-    url = "https://vikoeif.edupage.org/timetable/server/regulartt.js?__func=regularttGetData"
+result = response.json()
 
-    payload = json.dumps({
-        "__args": [
-            None,
-            "310"
-        ],
-        "__gsh": "00000000"
-    })
-    response = requests.request("POST", url, data=payload)
+periods = result['r']['dbiAccessorRes']['tables'][1]['data_rows']
+daydefs = result['r']['dbiAccessorRes']['tables'][4]['data_rows']
+weekdefs = result['r']['dbiAccessorRes']['tables'][5]['data_rows']
+days = result['r']['dbiAccessorRes']['tables'][7]['data_rows']
+weeks = result['r']['dbiAccessorRes']['tables'][8]['data_rows']
 
-    result = response.json()
+classrooms = result['r']['dbiAccessorRes']['tables'][11]['data_rows']
+classes = result['r']['dbiAccessorRes']['tables'][12]['data_rows']
+subjects = result['r']['dbiAccessorRes']['tables'][13]['data_rows']
+teachers = result['r']['dbiAccessorRes']['tables'][14]['data_rows']
+groups = result['r']['dbiAccessorRes']['tables'][15]['data_rows']
 
-    periods = result['r']['dbiAccessorRes']['tables'][1]['data_rows']
-    daydefs = result['r']['dbiAccessorRes']['tables'][4]['data_rows']
-    weekdefs = result['r']['dbiAccessorRes']['tables'][5]['data_rows']
-    days = result['r']['dbiAccessorRes']['tables'][7]['data_rows']
-    weeks = result['r']['dbiAccessorRes']['tables'][8]['data_rows']
+divisions = result['r']['dbiAccessorRes']['tables'][16]['data_rows']
+lessons = result['r']['dbiAccessorRes']['tables'][18]['data_rows']
+cards = result['r']['dbiAccessorRes']['tables'][20]['data_rows']
+ttreports = result['r']['dbiAccessorRes']['tables'][21]['data_rows']
 
-    classrooms = result['r']['dbiAccessorRes']['tables'][11]['data_rows']
-    classes = result['r']['dbiAccessorRes']['tables'][12]['data_rows']
-    subjects = result['r']['dbiAccessorRes']['tables'][13]['data_rows']
-    teachers = result['r']['dbiAccessorRes']['tables'][14]['data_rows']
-    groups = result['r']['dbiAccessorRes']['tables'][15]['data_rows']
 
-    divisions = result['r']['dbiAccessorRes']['tables'][16]['data_rows']
-    lessons = result['r']['dbiAccessorRes']['tables'][18]['data_rows']
-    cards = result['r']['dbiAccessorRes']['tables'][20]['data_rows']
-    ttreports = result['r']['dbiAccessorRes']['tables'][21]['data_rows']
+@app.get("/teachers")
+def get_teachers():
+    return json.dumps(teachers)
 
-    print(teachers)
 
-    # cards
-    # 'id': '*36',
-    # 'subjectid': '-2488'     => Informacinių sistemų auditas,
-    # 'teacherids': ['-1083'],   => Lekt. V. Valukonis
-    # 'groupids': ['*24'], 'classids': ['-732']    => IS20A,
-    # 'count': 1, 'durationperiods': 1, 'classroomidss': [['-430']] => 414,
-    # 'termsdefid': '*3', 'weeksdefid': '*4', 'daysdefid': '*7', 'terms': '1',
-    # 'seminargroup': None, 'bell': '', 'studentids': [], 'groupnames': ['']
+@app.get("/teacher/{idd}/{datefrom}/{dateto}")
+def hello(idd, datefrom, dateto):
+    current_teacher = get_teachers(idd, datefrom, dateto)['r']['ttitems']
 
-    # -430 = 414
+    new_list = []
 
-    # print(lessons)
-    print(groups[46]['id'])
-    print(groups[46]['classid'])
+    for item in current_teacher:
+        for teacher in teachers:
+            if teacher['id'] in item['teacherids']:
+                item['teacher'] = teacher['short']
+                break
+        for subject in subjects:
+            if subject['id'] in item['subjectid']:
+                item['subject'] = subject['name']
+                break
+        for group in classes:
+            if group['id'] in item['classids']:
+                item['group'] = group['name']
+                break
+        for classroom in classrooms:
+            if classroom['id'] in item['classroomids']:
+                item['classroom'] = classroom['name']
+                break
+        new_list.append(item)
 
-    for group in groups:
-        for cl in classes:
-            if cl['id'] == group['classid']:
-                print(cl['name'], cl['id'])
-
-# a = groups[46]['classid'] in classes[0]['id']
-# print(a)
-# print(classes[0]['id'])
-# 'classid': '-728'
+    return new_list
